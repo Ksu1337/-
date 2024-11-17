@@ -1,0 +1,130 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Ticket {
+public:
+    int id;
+    bool isBooked;
+
+    Ticket(int ticketId) : id(ticketId), isBooked(false) {}
+};
+
+class Concert {
+public:
+    string name;
+    string date;
+    vector<Ticket> tickets;
+
+    Concert(string concertName, string concertDate, int ticketCount) : name(concertName), date(concertDate) {
+        for (int i = 1; i <= ticketCount; ++i) {
+            tickets.emplace_back(i);
+        }
+    }
+
+    void displayTickets() {
+        cout << "Доступные билеты для " << name << " (" << date << "):\n";
+        for (const auto& ticket : tickets) {
+            if (!ticket.isBooked) {
+                cout << "Билет №" << ticket.id << " (доступен)\n";
+            }
+        }
+    }
+};
+
+class User {
+public:
+    string userName;
+    vector<int> purchasedTickets;
+
+    User(string name) : userName(name) {}
+
+    void buyTicket(int ticketId) {
+        purchasedTickets.push_back(ticketId);
+    }
+};
+
+class TicketSystem {
+private:
+    vector<Concert> concerts;
+    vector<User> users;
+
+public:
+    void addConcert(const Concert& concert) {
+        concerts.push_back(concert);
+    }
+
+    void showConcerts() {
+        cout << "Доступные концерты:\n";
+        for (int i = 0; i < concerts.size(); ++i) {
+            cout << i + 1 << ". " << concerts[i].name << " (" << concerts[i].date << ")\n";
+        }
+    }
+
+    bool bookTicket(int concertIndex, int ticketId, string userName) {
+        if (concertIndex < 0 || concertIndex >= concerts.size()) {
+            cout << "Некорректный индекс концерта.\n";
+            return false;
+        }
+
+        Concert& concert = concerts[concertIndex];
+        for (auto& ticket : concert.tickets) {
+            if (ticket.id == ticketId && !ticket.isBooked) {
+                ticket.isBooked = true;
+
+                // Проверка, есть ли такой пользователь, если нет - создаем
+                auto userIt = find_if(users.begin(), users.end(), [&userName](const User& user) { return user.userName == userName; });
+                if (userIt == users.end()) {
+                    users.emplace_back(userName);
+                    userIt = --users.end();
+                }
+
+                userIt->buyTicket(ticketId);
+                cout << "Билет №" << ticketId << " успешно забронирован пользователем " << userName << ".\n";
+                return true;
+            }
+        }
+
+        cout << "Билет №" << ticketId << " уже забронирован.\n";
+        return false;
+    }
+};
+
+int main() {
+    setlocale(LC_ALL, "ru-RU");
+    TicketSystem system;
+
+    // Добавляем некоторые концерты
+    system.addConcert(Concert("Концерт Олечки Бузовой", "12.01.2025", 580));
+    system.addConcert(Concert("Концерт Лолиты Мелявской", "17.03.2025", 1200));
+    system.addConcert(Concert("Концерт Шамана", "14.02.2025", 314));
+    system.addConcert(Concert("Концерт Маленьких утят", "28.01.2025", 175));
+    system.addConcert(Concert("Концерт Шафутинского", "05.06.2025", 3000));
+
+    while (true) {
+        system.showConcerts();
+        cout << "Введите индекс концерта для бронирования (или -1 для выхода): ";
+        int concertChoice;
+        cin >> concertChoice;
+
+        if (concertChoice == -1) {
+            break;
+        }
+
+        concertChoice--; // Приводим к индексу массива
+
+        cout << "Введите номер билета для бронирования: ";
+        int ticketId;
+        cin >> ticketId;
+
+        cout << "Введите ваше имя: ";
+        string userName;
+        cin >> userName;
+
+        system.bookTicket(concertChoice, ticketId, userName);
+    }
+
+    return 0;
+}
